@@ -1,0 +1,23 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: wind-forecast-analytics:latest
+    container_name: wind-forecast-analytics
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - ELEXON_BASE_URL=https://data.elexon.co.uk/bmrs/api/v1
+      - DEFAULT_START_DATE=2026-01-01
+      - DEFAULT_END_DATE=2026-01-31
+      - DEFAULT_CUTOFF_POLICY=day_ahead_1700
+      - HTTP_TIMEOUT_SECONDS=30.0
+      - CACHE_TTL_SECONDS=3600
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; r = httpx.get('http://127.0.0.1:8000/api/health', timeout=3.0); exit(0 if r.status_code == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

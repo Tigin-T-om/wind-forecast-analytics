@@ -1,0 +1,29 @@
+# Local virtual environments
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Local frontend dependencies and builds
+frontend/node_modules/
+frontend/dist/
+frontend/.eslintcache
+npm-debug.log*
+
+# Git repository
+.git/
+.gitignore
+
+# Environment and secrets
+.env
+*.env.local
+
+# IDE and OS files
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
