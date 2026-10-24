@@ -206,3 +206,52 @@ def test_build_observations_exact_resolution():
     assert obs[0]["status"] == "matched"
     assert obs[1]["status"] == "missing_forecast"
     assert obs[1]["forecast_mw"] is None
+
+
+def test_get_policy_metadata_all_policies():
+    """Verify that get_policy_metadata returns accurate metadata and defaults to day_ahead_1200."""
+    from backend.app.services.data_processing import get_policy_metadata
+
+    meta_da12 = get_policy_metadata("day_ahead_1200")
+    assert meta_da12["policy_id"] == "day_ahead_1200"
+    assert "Auction Cutoff" in meta_da12["name"]
+    assert "12:00:00 UTC" in meta_da12["cutoff_rule"]
+
+    meta_da17 = get_policy_metadata("day_ahead_1700")
+    assert meta_da17["policy_id"] == "day_ahead_1700"
+    assert "Gate Closure" in meta_da17["name"]
+    assert "17:00:00 UTC" in meta_da17["cutoff_rule"]
+
+    meta_default = get_policy_metadata("unknown_policy")
+    assert meta_default["policy_id"] == "day_ahead_1200"
+
+
+def test_build_observations_fractional_precision_and_subtraction_exactness():
+    """Verify that hourly resolution averages odd half-hour pairs into .5 MW without truncation or drift."""
+    actuals_map = {
+        # 14,001 + 15,000 = 29,001 -> average = 14,500.5 MW
+        "2026-01-01T00:00:00Z": {"generation": 14001, "settlement_period": 1},
+        "2026-01-01T00:30:00Z": {"generation": 15000, "settlement_period": 2},
+    }
+    forecasts_map = {
+        "2026-01-01T00:00:00Z": {
+            "generation": 16000,
+            "publish_time": "2025-12-31T11:00:00Z",
+        }
+    }
+
+    obs, pairs, used, total = build_observations(
+        actuals_map,
+        forecasts_map,
+        start_date="2026-01-01",
+        end_date="2026-01-01",
+        resolution="hourly",
+    )
+
+    h0 = obs[0]
+    assert h0["forecast_mw"] == 16000.0
+    assert h0["actual_mw"] == 14500.5
+    assert h0["signed_error"] == 1499.5
+    assert h0["absolute_error"] == 1499.5
+    assert h0["signed_error"] == round(h0["forecast_mw"] - h0["actual_mw"], 2)
+    assert h0["absolute_error"] == round(abs(h0["signed_error"]), 2)

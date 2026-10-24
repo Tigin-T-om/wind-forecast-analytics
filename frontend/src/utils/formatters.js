@@ -2,26 +2,52 @@
  * Utilities for formatting electricity data, MW units, timestamps, and status badges.
  */
 
-export function formatMW(value, decimals = 0) {
+export function getDecimalPlaces(value) {
+  if (value === null || value === undefined || isNaN(value)) return 0
+  const s = String(value)
+  const dot = s.indexOf('.')
+  return dot === -1 ? 0 : Math.min(2, s.length - dot - 1)
+}
+
+export function formatMW(value, decimals = null) {
   if (value === null || value === undefined || isNaN(value)) {
     return '—'
   }
-  const formatted = Number(value).toLocaleString('en-GB', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
+  const num = Number(value)
+  let minDigits = 0
+  let maxDigits = 0
+  if (decimals !== null && decimals !== undefined) {
+    minDigits = decimals
+    maxDigits = decimals
+  } else if (!Number.isInteger(num)) {
+    minDigits = 1
+    maxDigits = 2
+  }
+  const formatted = num.toLocaleString('en-GB', {
+    minimumFractionDigits: minDigits,
+    maximumFractionDigits: maxDigits,
   })
   return `${formatted} MW`
 }
 
-export function formatSignedMW(value, decimals = 0) {
+export function formatSignedMW(value, decimals = null) {
   if (value === null || value === undefined || isNaN(value)) {
     return '—'
   }
   const num = Number(value)
   const sign = num > 0 ? '+' : ''
+  let minDigits = 0
+  let maxDigits = 0
+  if (decimals !== null && decimals !== undefined) {
+    minDigits = decimals
+    maxDigits = decimals
+  } else if (!Number.isInteger(num)) {
+    minDigits = 1
+    maxDigits = 2
+  }
   const formatted = num.toLocaleString('en-GB', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
+    minimumFractionDigits: minDigits,
+    maximumFractionDigits: maxDigits,
   })
   return `${sign}${formatted} MW`
 }

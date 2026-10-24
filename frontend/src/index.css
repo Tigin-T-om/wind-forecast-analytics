@@ -1068,6 +1068,28 @@ body {
   color: var(--green-400);
 }
 
+.provenance-list {
+  margin: 0.4rem 0 0.6rem 1.2rem;
+  padding: 0;
+  font-size: 0.815rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.provenance-list li {
+  margin-bottom: 0.25rem;
+}
+
+.provenance-active-highlight {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(30, 58, 138, 0.25);
+  border-left: 3px solid var(--navy-400);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+}
+
 /* States */
 .state-card {
   background: var(--bg-card);

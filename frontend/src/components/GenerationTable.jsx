@@ -4,6 +4,7 @@ import {
   formatSignedMW,
   formatDateTimeUTC,
   getStatusBadge,
+  getDecimalPlaces,
 } from '../utils/formatters'
 
 export default function GenerationTable({ observations = [] }) {
@@ -196,6 +197,11 @@ export default function GenerationTable({ observations = [] }) {
             ) : (
               paginatedData.map((row) => {
                 const badge = getStatusBadge(row.status)
+                const rowDecimals = Math.max(
+                  getDecimalPlaces(row.forecast_mw),
+                  getDecimalPlaces(row.actual_mw),
+                  getDecimalPlaces(row.signed_error)
+                )
                 return (
                   <tr key={row.delivery_timestamp}>
                     <td className="font-mono text-primary">
@@ -205,10 +211,10 @@ export default function GenerationTable({ observations = [] }) {
                       {formatDateTimeUTC(row.forecast_publish_time)}
                     </td>
                     <td className="font-mono text-right">
-                      {formatMW(row.forecast_mw)}
+                      {formatMW(row.forecast_mw, rowDecimals)}
                     </td>
                     <td className="font-mono text-right text-bold">
-                      {formatMW(row.actual_mw)}
+                      {formatMW(row.actual_mw, rowDecimals)}
                     </td>
                     <td className="font-mono text-right">
                       {row.signed_error !== null ? (
@@ -221,7 +227,7 @@ export default function GenerationTable({ observations = [] }) {
                               : ''
                           }
                         >
-                          {formatSignedMW(row.signed_error)}
+                          {formatSignedMW(row.signed_error, rowDecimals)}
                         </span>
                       ) : (
                         '—'
@@ -229,7 +235,7 @@ export default function GenerationTable({ observations = [] }) {
                     </td>
                     <td className="font-mono text-right">
                       {row.absolute_error !== null
-                        ? formatMW(row.absolute_error)
+                        ? formatMW(row.absolute_error, rowDecimals)
                         : '—'}
                     </td>
                     <td className="text-center">

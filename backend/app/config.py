@@ -24,7 +24,7 @@ SUPPORTED_CUTOFF_POLICIES: Set[str] = {
     "gate_closure_1h",  # 1 hour prior to delivery interval start
     "latest_prior",     # Latest forecast published prior to delivery start
 }
-DEFAULT_CUTOFF_POLICY: str = os.getenv("DEFAULT_CUTOFF_POLICY", "day_ahead_1700")
+DEFAULT_CUTOFF_POLICY: str = os.getenv("DEFAULT_CUTOFF_POLICY", "day_ahead_1200")
 
 # Supported Resolution Modes
 SUPPORTED_RESOLUTIONS: Set[str] = {

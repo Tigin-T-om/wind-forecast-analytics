@@ -13,7 +13,7 @@ export default function App() {
   const [filterParams, setFilterParams] = useState({
     startDate: '2026-01-01',
     endDate: '2026-01-31',
-    cutoffPolicy: 'day_ahead_1700',
+    cutoffPolicy: 'day_ahead_1200',
     resolution: 'hourly',
   })
 
@@ -214,7 +214,21 @@ export default function App() {
                 <div>
                   <h4>Forecast Cutoff &amp; Market Rules</h4>
                   <p>
-                    Under UK Day-Ahead power purchasing, transactions clear prior to the delivery day. The <strong>Day-Ahead 17:00 UTC (D-1)</strong> policy enforces that no forecast published after 17:00 on the day prior to delivery can be selected, eliminating look-ahead bias.
+                    Under UK Day-Ahead power purchasing, transactions clear prior to physical delivery. The application enforces strict cutoff thresholds to eliminate look-ahead bias:
+                  </p>
+                  <ul className="provenance-list">
+                    <li>
+                      <strong>Day-Ahead 12:00 UTC (D-1):</strong> Aligns with EPEX SPOT Day-Ahead power auction clearing. Only forecasts published on or before 12:00 UTC on the prior day are eligible.
+                    </li>
+                    <li>
+                      <strong>Day-Ahead 17:00 UTC (D-1):</strong> Aligns with physical bilateral contract notification gate closure (17:00 UTC on D-1).
+                    </li>
+                    <li>
+                      <strong>Operational Intraday / Gate Closure:</strong> Balancing mechanism benchmarks prior to delivery commencement.
+                    </li>
+                  </ul>
+                  <p className="provenance-active-highlight">
+                    Active Policy: <strong>{policy?.name}</strong> — {policy?.description} (<code>{policy?.cutoff_rule}</code>).
                   </p>
                   <p>
                     <strong>Sign Conventions:</strong> Signed Error = Forecast − Actual. Positive bias signifies overforecasting (purchased more wind energy than was actually generated, leading to imbalance system sell charges).

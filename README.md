@@ -124,9 +124,9 @@ The application connects to the official Elexon BMRS API endpoints:
 In electricity trading, Day-Ahead positions are taken prior to physical delivery. The application enforces a strict cutoff threshold: **any forecast published after the cutoff is strictly ineligible**.
 
 Supported Cutoff Policies:
-- **`day_ahead_1700` (Default):** Cutoff is 17:00:00 UTC on the day prior to delivery ($D - 1$). Represents standard Day-Ahead trading market closure.
-- **`day_ahead_1200`:** Cutoff is 12:00:00 UTC on the day prior to delivery ($D - 1$), matching EPEX SPOT Day-Ahead auction clearing.
-- **`gate_closure_1h`:** Cutoff is 1 hour prior to delivery interval start ($T_{\text{delivery}} - 1\text{h}$), matching UK Balancing Mechanism gate closure.
+- **`day_ahead_1200` (Default Auction Cutoff):** Cutoff is 12:00:00 UTC on the day prior to delivery ($D - 1$), matching EPEX SPOT Day-Ahead power auction clearing.
+- **`day_ahead_1700` (Gate Closure):** Cutoff is 17:00:00 UTC on the day prior to delivery ($D - 1$), matching bilateral contract physical notification gate closure.
+- **`gate_closure_1h`:** Cutoff is 1 hour prior to delivery interval start ($T_{\text{delivery}} - 1\text{h}$), matching UK Balancing Mechanism operational gate closure.
 - **`latest_prior`:** Latest forecast published prior to or at delivery commencement ($T_{\text{delivery}}$).
 
 ### Tie-Breaking & Deduplication
@@ -253,24 +253,33 @@ Access the application at [http://localhost:8000](http://localhost:8000).
    - `PORT=8000`
    - `DEFAULT_START_DATE=2026-01-01`
    - `DEFAULT_END_DATE=2026-01-31`
-   - `DEFAULT_CUTOFF_POLICY=day_ahead_1700`
+   - `DEFAULT_CUTOFF_POLICY=day_ahead_1200`
+   - `DEFAULT_RESOLUTION=hourly`
    - `ELEXON_BASE_URL=https://data.elexon.co.uk/bmrs/api/v1`
 3. Health check route: `GET /api/health`
 
 ---
 
-## 13. AI Tools Used & Contribution
+## 13. Data Presentation & Rounding Integrity
+
+- **Full-Precision Core Calculations:** Backend metrics and observation errors are computed at native floating-point precision and rounded only during response serialization (`round(..., 2)`).
+- **Presentation Arithmetic Consistency:** In the UI table, row values dynamically synchronize their decimal places so that displayed Signed Error strictly equals displayed Forecast minus displayed Actual, and displayed Absolute Error equals `|Signed Error|` without visual 1 MW rounding discrepancies.
+- **CSV Data Integrity:** Raw, unrounded metric values are exported to CSV for reproducible statistical auditing.
+
+---
+
+## 14. AI Tools Used & Contribution
 
 - **Antigravity AI (Pair Programming Assistant):**
   - Architected the standard-library data processing pipeline without pandas to respect Windows Application Control restrictions.
   - Implemented the deterministic Day-Ahead cutoff selection engine and metrics formulas.
+  - Resolved the 50% vs 100% resolution disparity with mathematically defensible energy-weighted averaging and block mapping.
   - Designed the executive responsive SVG charts and data table with pagination and CSV export.
   - Developed test suites covering edge cases, missing data, and upstream API error propagation.
 
 ---
 
-## 14. Known Limitations & Next Steps
+## 15. Known Limitations & Next Steps
 
-1. **Half-Hourly Forecast Resolution:** Elexon publishes national `WINDFOR` forecasts on an hourly basis, while `FUELHH` actuals are half-hourly. Half-hourly `:30` intervals are clearly labeled as `missing_forecast`. A future enhancement could interpolate or average actuals over the hour.
-2. **Upstream Rate Limiting:** While Elexon's BMRS API stream endpoints are public and responsive, extreme date ranges (e.g. multi-year queries) could benefit from persistent database storage (e.g. PostgreSQL/TimescaleDB).
-3. **Regional Zonal Breakdown:** The current implementation processes national totals. Expanding to regional transmission zones (DNO license areas) would provide granular local visibility.
+1. **Upstream Rate Limiting:** While Elexon's BMRS API stream endpoints are public and responsive, extreme date ranges (e.g. multi-year queries) could benefit from persistent database storage (e.g. PostgreSQL/TimescaleDB).
+2. **Regional Zonal Breakdown:** The current implementation processes national totals. Expanding to regional transmission zones (DNO license areas) would provide granular local visibility.

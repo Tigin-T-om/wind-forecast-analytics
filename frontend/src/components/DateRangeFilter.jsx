@@ -1,10 +1,26 @@
 import { useState } from 'react'
 
 const POLICY_OPTIONS = [
-  { id: 'day_ahead_1700', label: 'Day-Ahead 17:00 UTC (D-1) — Standard Day-Ahead' },
-  { id: 'day_ahead_1200', label: 'Day-Ahead 12:00 UTC (D-1) — Auction Cutoff' },
-  { id: 'gate_closure_1h', label: 'Gate Closure (1h Prior) — Operational Balancing' },
-  { id: 'latest_prior', label: 'Latest Prior to Delivery — Within-Day / Intraday' },
+  {
+    id: 'day_ahead_1200',
+    label: 'Day-Ahead 12:00 UTC (D-1) — Auction Cutoff',
+    title: 'EPEX SPOT auction deadline: forecasts published strictly on or before 12:00 UTC on the prior day (D-1)',
+  },
+  {
+    id: 'day_ahead_1700',
+    label: 'Day-Ahead 17:00 UTC (D-1) — Gate Closure',
+    title: 'Physical notification gate: forecasts published strictly on or before 17:00 UTC on the prior day (D-1)',
+  },
+  {
+    id: 'gate_closure_1h',
+    label: 'Gate Closure (1h Prior) — Operational Balancing',
+    title: 'Balancing Mechanism gate: forecasts published at least 1 hour before delivery interval start',
+  },
+  {
+    id: 'latest_prior',
+    label: 'Latest Prior to Delivery — Within-Day / Intraday',
+    title: 'Intraday updates: latest forecast published strictly prior to delivery start',
+  },
 ]
 
 const RESOLUTION_OPTIONS = [
@@ -118,7 +134,7 @@ export default function DateRangeFilter({
               disabled={isLoading}
             >
               {POLICY_OPTIONS.map((opt) => (
-                <option key={opt.id} value={opt.id}>
+                <option key={opt.id} value={opt.id} title={opt.title}>
                   {opt.label}
                 </option>
               ))}

@@ -85,17 +85,17 @@ def get_cutoff_datetime(delivery_dt: datetime, policy: str) -> datetime:
 def get_policy_metadata(policy: str) -> Dict[str, str]:
     """Return descriptive metadata for a cutoff policy."""
     policies = {
-        "day_ahead_1700": {
-            "policy_id": "day_ahead_1700",
-            "name": "Day-Ahead 17:00 UTC Cutoff",
-            "description": "Selects the latest forecast published by 17:00 UTC on the day prior to delivery (D-1).",
-            "cutoff_rule": "publishTime <= (DeliveryDate - 1 day) at 17:00:00 UTC",
-        },
         "day_ahead_1200": {
             "policy_id": "day_ahead_1200",
-            "name": "Day-Ahead 12:00 UTC Cutoff",
-            "description": "Selects the latest forecast published by 12:00 UTC on the day prior to delivery (D-1), matching day-ahead power auction timelines.",
+            "name": "Day-Ahead 12:00 UTC (D-1) — Auction Cutoff",
+            "description": "Selects the latest forecast published by 12:00 UTC on the day prior to delivery (D-1), matching EPEX SPOT Day-Ahead power auction clearing.",
             "cutoff_rule": "publishTime <= (DeliveryDate - 1 day) at 12:00:00 UTC",
+        },
+        "day_ahead_1700": {
+            "policy_id": "day_ahead_1700",
+            "name": "Day-Ahead 17:00 UTC (D-1) — Gate Closure",
+            "description": "Selects the latest forecast published by 17:00 UTC on the day prior to delivery (D-1), matching physical bilateral contract notification cutoffs.",
+            "cutoff_rule": "publishTime <= (DeliveryDate - 1 day) at 17:00:00 UTC",
         },
         "gate_closure_1h": {
             "policy_id": "gate_closure_1h",
@@ -110,7 +110,7 @@ def get_policy_metadata(policy: str) -> Dict[str, str]:
             "cutoff_rule": "publishTime <= deliveryStartTime",
         },
     }
-    return policies.get(policy, policies["day_ahead_1700"])
+    return policies.get(policy, policies["day_ahead_1200"])
 
 
 def get_resolution_metadata(resolution: str) -> Dict[str, str]:

@@ -15,7 +15,7 @@ export async function fetchHealth() {
 export async function fetchAnalysis({
   startDate = '2026-01-01',
   endDate = '2026-01-31',
-  cutoffPolicy = 'day_ahead_1700',
+  cutoffPolicy = 'day_ahead_1200',
   resolution = 'hourly',
 }) {
   const params = new URLSearchParams({

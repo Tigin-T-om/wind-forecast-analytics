@@ -166,3 +166,81 @@ def test_analysis_endpoint_upstream_error(mock_actuals):
     assert response.status_code == 504
     data = response.json()
     assert "timed out" in data["detail"]
+
+
+@patch("backend.app.api.routes.elexon_client.fetch_actual_generation")
+@patch("backend.app.api.routes.elexon_client.fetch_forecast_generation")
+def test_analysis_endpoint_default_parameters(mock_forecasts, mock_actuals):
+    """Verify that calling /api/analysis with no params defaults to day_ahead_1200 and hourly resolution."""
+    mock_actuals.return_value = (
+        [
+            {"fuelType": "WIND", "startTime": "2026-01-01T00:00:00Z", "generation": 10000},
+            {"fuelType": "WIND", "startTime": "2026-01-01T00:30:00Z", "generation": 10000},
+        ],
+        False,
+    )
+    mock_forecasts.return_value = (
+        [
+            {"dataset": "WINDFOR", "startTime": "2026-01-01T00:00:00Z", "publishTime": "2025-12-31T11:00:00Z", "generation": 11000},
+        ],
+        False,
+    )
+
+    response = client.get("/api/analysis")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["forecast_selection_policy"]["policy_id"] == "day_ahead_1200"
+    assert "Auction Cutoff" in data["forecast_selection_policy"]["name"]
+    assert data["summary_metrics"]["resolution"] == "hourly"
+    assert data["requested_period"]["start_date"] == "2026-01-01"
+    assert data["requested_period"]["end_date"] == "2026-01-31"
+
+
+@patch("backend.app.api.routes.elexon_client.fetch_actual_generation")
+@patch("backend.app.api.routes.elexon_client.fetch_forecast_generation")
+def test_analysis_endpoint_observation_error_integrity(mock_forecasts, mock_actuals):
+    """Verify that every matched observation satisfies signed_error = forecast - actual and abs_error = |signed_error|."""
+    mock_actuals.return_value = (
+        [
+            # Odd sum creates .5 MW average: (14001 + 15000) / 2 = 14500.5 MW
+            {"fuelType": "WIND", "startTime": "2026-01-01T00:00:00Z", "generation": 14001},
+            {"fuelType": "WIND", "startTime": "2026-01-01T00:30:00Z", "generation": 15000},
+            # Even sum: (10000 + 12000) / 2 = 11000.0 MW
+            {"fuelType": "WIND", "startTime": "2026-01-01T01:00:00Z", "generation": 10000},
+            {"fuelType": "WIND", "startTime": "2026-01-01T01:30:00Z", "generation": 12000},
+        ],
+        False,
+    )
+    mock_forecasts.return_value = (
+        [
+            {"dataset": "WINDFOR", "startTime": "2026-01-01T00:00:00Z", "publishTime": "2025-12-31T11:00:00Z", "generation": 16000},
+            {"dataset": "WINDFOR", "startTime": "2026-01-01T01:00:00Z", "publishTime": "2025-12-31T11:00:00Z", "generation": 10500},
+        ],
+        False,
+    )
+
+    response = client.get("/api/analysis?start_date=2026-01-01&end_date=2026-01-01")
+    assert response.status_code == 200
+    data = response.json()
+
+    matched_obs = [o for o in data["observations"] if o["status"] == "matched"]
+    assert len(matched_obs) == 2
+
+    # Hour 0: 16000 - 14500.5 = +1499.5 MW
+    h0 = matched_obs[0]
+    assert h0["forecast_mw"] == 16000.0
+    assert h0["actual_mw"] == 14500.5
+    assert h0["signed_error"] == 1499.5
+    assert h0["absolute_error"] == 1499.5
+    assert round(h0["forecast_mw"] - h0["actual_mw"], 2) == h0["signed_error"]
+    assert round(abs(h0["signed_error"]), 2) == h0["absolute_error"]
+
+    # Hour 1: 10500 - 11000 = -500.0 MW
+    h1 = matched_obs[1]
+    assert h1["forecast_mw"] == 10500.0
+    assert h1["actual_mw"] == 11000.0
+    assert h1["signed_error"] == -500.0
+    assert h1["absolute_error"] == 500.0
+    assert round(h1["forecast_mw"] - h1["actual_mw"], 2) == h1["signed_error"]
+    assert round(abs(h1["signed_error"]), 2) == h1["absolute_error"]

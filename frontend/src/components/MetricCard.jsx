@@ -5,6 +5,7 @@ export default function MetricCard({
   value,
   type = 'standard', // 'standard', 'signed', 'count'
   unit = 'MW',
+  decimals = 0,
   description,
   trend,
   badgeText,
@@ -13,11 +14,11 @@ export default function MetricCard({
   let displayValue = '—'
   if (value !== null && value !== undefined) {
     if (type === 'signed') {
-      displayValue = formatSignedMW(value)
+      displayValue = formatSignedMW(value, decimals)
     } else if (type === 'count') {
       displayValue = Number(value).toLocaleString('en-GB')
     } else {
-      displayValue = formatMW(value)
+      displayValue = formatMW(value, decimals)
     }
   }
 
